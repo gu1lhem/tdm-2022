@@ -8,15 +8,61 @@ Code.du.departement	Libelle.du.departement	Code.de.la.commune	Libelle.de.la.comm
 1	Ain	4	Ambérieu-en-Bugey	8586	1962	22.85	6624	77.15	114	1.33	1.72	58	0.68	0.88	6452	75.15	97.4	5.36	25.84	20.64	5.33	0.62	1.41	0.08	0.93	21.88	1.1	16.8
 1	Ain	5	Ambérieux-en-Dombes	1172	215	18.34	957	81.66	21	1.79	2.19	3	0.26	0.31	933	79.61	97.49	4.82	32.8	20.47	3.97	0.54	1.07	0	0.64	13.5	1.07	21.11
 
-This is an XLSX file.
+This is a CSV file, with the first line being the headers.
 """
+
+import csv
+import os
+import sys
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
+from typing import List, Dict, Tuple, Union
 
 from decouple import config
 
 path = config('PATH_TO_DATA')
+
+def get_data(path: str, separator:str=";") -> pd.DataFrame:
+    """
+    Function that will return the data from the CSV file.
+    
+    Args:
+        path (str): Path to the CSV file.
+        separator (str): Separator used in the CSV file.
+
+    Returns:
+        pd.DataFrame: Dataframe containing the data.
+
+    Requires:
+        pandas
+    """
+    if path.endswith('.csv'):
+        try:
+            return pd.read_csv(path, sep=separator)
+        except UnicodeDecodeError:
+            return pd.read_csv(path, sep=separator, encoding='latin-1')
+    else:
+        raise ValueError('The path given is not a CSV file.')
+
+def clear_data(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function that will clear the data from the CSV file.
+
+    Args:
+        data (pd.DataFrame): Dataframe containing the data.
+
+    Returns:
+        pd.DataFrame: Dataframe containing the data.
+
+    Requires:
+        pandas
+    """
+    
+    # We replace the _ and . by a space
+    data.columns = [header.replace('_', ' ').replace('.', ' ') for header in data.columns]
+
+    return data
+
+
+print(clear_data(get_data(path)))
