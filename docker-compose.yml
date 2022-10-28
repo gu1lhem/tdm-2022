@@ -1,0 +1,36 @@
+version: "3.9"
+   
+services:
+  
+  neo4j:
+    image: neo4j:4.0.4
+    environment:
+      - NEO4J_AUTH=neo4j/Password
+      - NEO4J_dbms_connector_http_advertised__address=localhost:7474
+      - NEO4J_dbms_connector_bolt_advertised__address=localhost:7687
+    expose:
+      - 7474
+      - 7687
+    ports:
+      - 7474:7474
+      - 7687:7687
+  
+  cassandra:
+    image: cassandra:4.0
+    ports:
+      - 9042:9042
+    environment:
+      - CASSANDRA_CLUSTER_NAME=cloudinfra
+
+  arangodb:
+    image: arangodb:3.5.3
+    restart: always
+    ports:
+      - 8529:8529
+    environment:
+      - ARANGO_ROOT_PASSWORD=Password
+
+  janusgraph:
+    image: janusgraph/janusgraph:latest
+    ports:
+      - "8182:8182"
