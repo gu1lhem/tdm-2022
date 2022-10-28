@@ -1,2 +1,8 @@
 # Microsoft Office
 *.*x
+
+# Python venv
+env/
+
+# Environment variables
+.env
