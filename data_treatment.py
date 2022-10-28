@@ -10,7 +10,6 @@ Code.du.departement	Libelle.du.departement	Code.de.la.commune	Libelle.de.la.comm
 
 This is an XLSX file.
 """
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,4 +18,4 @@ import os
 
 from decouple import config
 
-path = config('PATH_TO_DATA')
+path = config("PATH_TO_DATA")
