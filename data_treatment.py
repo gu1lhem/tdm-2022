@@ -21,12 +21,13 @@ from typing import List, Dict, Tuple, Union
 
 from decouple import config
 
-path = config('PATH_TO_DATA')
+path = config("PATH_TO_DATA")
 
-def get_data(path: str, separator:str=";") -> pd.DataFrame:
+
+def get_data(path: str, separator: str = ";") -> pd.DataFrame:
     """
     Function that will return the data from the CSV file.
-    
+
     Args:
         path (str): Path to the CSV file.
         separator (str): Separator used in the CSV file.
@@ -37,13 +38,14 @@ def get_data(path: str, separator:str=";") -> pd.DataFrame:
     Requires:
         pandas
     """
-    if path.endswith('.csv'):
+    if path.endswith(".csv"):
         try:
             return pd.read_csv(path, sep=separator)
         except UnicodeDecodeError:
-            return pd.read_csv(path, sep=separator, encoding='latin-1')
+            return pd.read_csv(path, sep=separator, encoding="latin-1")
     else:
-        raise ValueError('The path given is not a CSV file.')
+        raise ValueError("The path given is not a CSV file.")
+
 
 def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     """
@@ -58,9 +60,11 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     Requires:
         pandas
     """
-    
+
     # We replace the _ and . by a space
-    data.columns = [header.replace('_', ' ').replace('.', ' ') for header in data.columns]
+    data.columns = [
+        header.replace("_", " ").replace(".", " ") for header in data.columns
+    ]
 
     return data
 
