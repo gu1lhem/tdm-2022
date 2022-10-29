@@ -6,3 +6,6 @@ env/
 
 # Environment variables
 .env
+
+*.egg-info
+*.pyc

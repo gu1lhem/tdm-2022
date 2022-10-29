@@ -3,11 +3,22 @@
 ## Installation
 
 ### Env installation
+#### With requirements.txt
 ```bash
 python -m venv env
 .\env\Scripts\activate
 pip install -r requirements.txt
 pre-commit install
+```
+#### With setup.py
+```bash
+python -m venv env
+.\env\Scripts\activate
+pip install -e .
+```
+If you want to install specific dependencies, you can use the following command:
+```bash
+pip install -e .[arangodb]/[janusgraph]/[cosmodb]
 ```
 
 ### Docker
