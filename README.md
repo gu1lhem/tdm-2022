@@ -16,6 +16,8 @@ membres du groupe et le temps passé sur ce projet.
 
 ## TODO Cas d'usage
 - [X] Installation des systèmes de BD
+- [X] Nettoyer les données
+    - Deux entités, une ville avec tous le nombre d'inscrits, d'abstention, etc... et les candidats
 - [ ] Importer les données dans tous les systèmes de BD:
     - [ ] arangoDB
     - [ ] CosmoDB
@@ -23,9 +25,15 @@ membres du groupe et le temps passé sur ce projet.
 - [ ] Point de vue Utilisateur standard : Vous devez pour cela définir, en langage courant, 4 types
 d’interrogations sur votre jeu de données. On estimera que celles-ci sont effectuées très
 fréquemment
+    1. Obtenir les gagnants dans chaque ville -> select
+    2.
+    3. Les resultats des dix villes les plus peuplés  ->
+    4. Pour chaque candidat, la ville où il a fait le meilleur résultat -> select
 - [ ] Point de vue Analyste de données : Vous devez pour cela définir, en langage courant, 2 types
 d’interrogations complexes sur votre jeu de données (agrégation, transformation, calcul
 complexe)
+    1. Obtenir les gagnants dans chaque département -> agrégation et calcul
+    2. Transformer le pourcentage exprimés pour chaque candidat par rappoort aux nombres d'inscrits et non plus d'exprimés
 - [ ] Tester le temps d'exécution des requêtes
 - [ ] **Ne pas oublier l'analyse théorique à réaliser individuellement**
 
