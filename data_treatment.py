@@ -60,46 +60,6 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
         header.replace("_", " ").replace(".", " ") for header in data.columns
     ]
 
-    # We create a new column with the name of the winner candidate
-    data["Candidat gagnant"] = data.iloc[:, 18:].idxmax(axis=1)
-
-    # We remove columns that are not useful
-    data = data.drop(
-        columns=[
-            "Inscrits",
-            "Abstentions",
-            "%Abs Ins",
-            "Votants",
-            "%Vot Ins",
-            "Blancs",
-            "%Blancs Ins",
-            "%Blancs Vot",
-            "Nuls",
-            "%Nuls Ins",
-            "%Nuls Vot",
-            "Exprimes",
-            "%Exp Ins",
-            "%Exp Vot",
-        ]
-    )
-
-    # We remove the candidats columns for one column for the winner
-    data = data.drop(
-        columns=[
-            "DUPONT-AIGNAN Nicolas",
-            "LE PEN Marine",
-            "MACRON Emmanuel",
-            "HAMON Benoit",
-            "ARTHAUD Nathalie",
-            "POUTOU Philippe",
-            "CHEMINADE Jacques",
-            "LASSALLE Jean",
-            "MELENCHON Jean-Luc",
-            "ASSELINEAU Francois",
-            "FILLON Francois",
-        ]
-    )
-
     return data
 
 
