@@ -35,6 +35,19 @@ Code.du.departement 	Libelle.du.departement 	Code.de.la.commune 	Libelle.de.la.c
 1 	Ain 	4 	Ambérieu-en-Bugey 	8586 	1962 	22.85 	6624 	77.15 	114 	1.33 	1.72 	58 	0.68 	0.88 	6452 	75.15 	97.4 	5.36 	25.84 	20.64 	5.33 	0.62 	1.41 	0.08 	0.93 	21.88 	1.1 	16.8
 """
 
+candidats_dict = {
+    "EM": "MACRON Emmanuel",
+    "MLP": "LE PEN Marine",
+    "NDA": "DUPONT-AIGNAN Nicolas",
+    "JLM": "MELENCHON Jean-Luc",
+    "FF": "FILLON Francois",
+    "BH": "HAMON Benoit",
+    "NA": "ARTHAUD Nathalie",
+    "PP": "POUTOU Philippe",
+    "FA": "ASSELINEAU Francois",
+    "JC": "CHEMINADE Jacques",
+    "JL": "LASSALLE Jean",
+}
 
 def create_insert_vertices_query(data):
     """
@@ -43,24 +56,9 @@ def create_insert_vertices_query(data):
     # We will create two collections : 'candidats' and 'communes'.
     # The 'candidats' collection will contain the candidats.
     # The 'communes' collection will contain the communes.
-    # The 'candidats' collection will be linked to the 'communes' collection with the 'voted_in' edge.
 
     # We will create a list of queries to insert the vertices.
     queries = []
-
-    # We will create a list of the candidats.
-    candidats_dict = {}
-    candidats_dict["EM"] = "MACRON Emmanuel"
-    candidats_dict["MLP"] = "LE PEN Marine"
-    candidats_dict["NDA"] = "DUPONT-AIGNAN Nicolas"
-    candidats_dict["JLM"] = "MELENCHON Jean-Luc"
-    candidats_dict["FF"] = "FILLON Francois"
-    candidats_dict["BH"] = "HAMON Benoit"
-    candidats_dict["NA"] = "ARTHAUD Nathalie"
-    candidats_dict["PP"] = "POUTOU Philippe"
-    candidats_dict["FA"] = "ASSELINEAU Francois"
-    candidats_dict["JC"] = "CHEMINADE Jacques"
-    candidats_dict["JL"] = "LASSALLE Jean"
 
     # We will create a query to insert the candidats with the dict
     for candidat in candidats_dict:
@@ -100,6 +98,116 @@ def create_insert_vertices_query(data):
 _gremlin_insert_vertices = create_insert_vertices_query(data)
 
 
+
+
+
+
+"""
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/EM",
+            "score": row["MACRON Emmanuel"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/MLP",
+            "score": row["LE PEN Marine"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/NDA",
+            "score": row["DUPONT-AIGNAN Nicolas"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/JLM",
+            "score": row["MELENCHON Jean-Luc"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/FF",
+            "score": row["FILLON Francois"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/BH",
+            "score": row["HAMON Benoit"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/NA",
+            "score": row["ARTHAUD Nathalie"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/PP",
+            "score": row["POUTOU Philippe"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/FA",
+            "score": row["ASSELINEAU Francois"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/JC",
+            "score": row["CHEMINADE Jacques"],
+        }
+    )
+    edges.insert(
+        {
+            "_from": f"communes/{commune_key}",
+            "_to": "candidats/JL",
+            "score": row["LASSALLE Jean"],
+        }
+    )
+"""
+
+_gremlin_insert_edges = [
+    "g.V('thomas').addE('knows').to(g.V('mary'))",
+    "g.V('thomas').addE('knows').to(g.V('ben'))",
+    "g.V('ben').addE('knows').to(g.V('robin'))",
+]
+
+def create_insert_edges_query(data):
+    """
+    Create the query to insert the edges.
+    """
+    # The 'candidats' collection will be linked to the 'communes' collection with the 'score' edge.
+
+    # We will create a list of queries to insert the edges.
+    queries = []
+
+    for index, row in data.iterrows():
+        commune_key = f"D{row['Code du departement']}C{row['Code de la commune']}"
+
+        # We will create a query to insert the edges with the dict
+        for candidat in candidats_dict:
+            query = f"g.V('{commune_key}').addE('score').to(g.V('{candidat}')).property('score', {row[candidats_dict[candidat]]})"
+            queries.append(query)
+
+_gremlin_insert_edges = create_insert_edges_query(data)
+
+
 def insert_vertices(client):
     for query in _gremlin_insert_vertices:
         print("\n> {0}\n".format(query))
@@ -127,13 +235,7 @@ if sys.platform == "win32":
 
 _gremlin_cleanup_graph = "g.V().drop()"
 
-
-_gremlin_insert_edges = [
-    "g.V('thomas').addE('knows').to(g.V('mary'))",
-    "g.V('thomas').addE('knows').to(g.V('ben'))",
-    "g.V('ben').addE('knows').to(g.V('robin'))",
-]
-
+"""
 _gremlin_update_vertices = ["g.V('thomas').property('age', 45)"]
 
 _gremlin_count_vertices = "g.V().count()"
@@ -151,7 +253,7 @@ _gremlin_drop_operations = {
     "Drop Edge - Thomas no longer knows Mary": "g.V('thomas').outE('knows').where(inV().has('id', 'mary')).drop()",
     "Drop Vertex - Drop Thomas": "g.V('thomas').drop()",
 }
-
+"""
 
 def print_status_attributes(result):
     # This logs the status attributes returned for successful requests.
