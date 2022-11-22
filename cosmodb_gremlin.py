@@ -7,12 +7,17 @@ import asyncio  # asyncio.run() is used to run the main() function.
 import sys  # sys.exit() is used to exit the script with a specific exit code.
 import traceback  # traceback.print_exc() is used to print the stack trace of the exception.
 
-from decouple import \
-    config  # decouple is used to read the environment variables from the .env file.
+from decouple import (
+    config,
+)  # decouple is used to read the environment variables from the .env file.
 from gremlin_python.driver import (  # This is the endpoint of the Gremlin server.
-    client, protocol, serializer)
-from gremlin_python.driver.protocol import \
-    GremlinServerError  # GremlinServerError is raised when the server returns an error.
+    client,
+    protocol,
+    serializer,
+)
+from gremlin_python.driver.protocol import (
+    GremlinServerError,
+)  # GremlinServerError is raised when the server returns an error.
 
 from data_treatment import clear_data, get_data
 
@@ -48,6 +53,7 @@ candidats_dict = {
     "JC": "CHEMINADE Jacques",
     "JL": "LASSALLE Jean",
 }
+
 
 def create_insert_vertices_query(data):
     """
@@ -98,96 +104,6 @@ def create_insert_vertices_query(data):
 _gremlin_insert_vertices = create_insert_vertices_query(data)
 
 
-
-
-
-
-"""
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/EM",
-            "score": row["MACRON Emmanuel"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/MLP",
-            "score": row["LE PEN Marine"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/NDA",
-            "score": row["DUPONT-AIGNAN Nicolas"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/JLM",
-            "score": row["MELENCHON Jean-Luc"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/FF",
-            "score": row["FILLON Francois"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/BH",
-            "score": row["HAMON Benoit"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/NA",
-            "score": row["ARTHAUD Nathalie"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/PP",
-            "score": row["POUTOU Philippe"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/FA",
-            "score": row["ASSELINEAU Francois"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/JC",
-            "score": row["CHEMINADE Jacques"],
-        }
-    )
-    edges.insert(
-        {
-            "_from": f"communes/{commune_key}",
-            "_to": "candidats/JL",
-            "score": row["LASSALLE Jean"],
-        }
-    )
-"""
-
-_gremlin_insert_edges = [
-    "g.V('thomas').addE('knows').to(g.V('mary'))",
-    "g.V('thomas').addE('knows').to(g.V('ben'))",
-    "g.V('ben').addE('knows').to(g.V('robin'))",
-]
-
 def create_insert_edges_query(data):
     """
     Create the query to insert the edges.
@@ -204,6 +120,7 @@ def create_insert_edges_query(data):
         for candidat in candidats_dict:
             query = f"g.V('{commune_key}').addE('score').to(g.V('{candidat}')).property('score', {row[candidats_dict[candidat]]})"
             queries.append(query)
+
 
 _gremlin_insert_edges = create_insert_edges_query(data)
 
@@ -254,6 +171,7 @@ _gremlin_drop_operations = {
     "Drop Vertex - Drop Thomas": "g.V('thomas').drop()",
 }
 """
+
 
 def print_status_attributes(result):
     # This logs the status attributes returned for successful requests.
@@ -382,7 +300,7 @@ try:
         "Now, let's add some edges between the vertices. Press any key to continue..."
     )
     insert_edges(client)
-
+    """
     # Update a vertex
     input(
         "Ah, sorry. I made a mistake. Let's change the age of this vertex. Press any key to continue..."
@@ -406,6 +324,9 @@ try:
     # Count all vertices again
     input("How many vertices do we have left? Press any key to continue...")
     count_vertices(client)
+    """
+
+    # We will make the requests we decided to do:
 
 except GremlinServerError as e:
     print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
