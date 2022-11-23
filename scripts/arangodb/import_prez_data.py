@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from connection import client
+from datasets import data, data_1, data_20, data_50, data_100
 from decouple import config
-
-from data_treatment import clear_data, get_data
 
 path = config("PATH_TO_DATA")
 username = config("ARANGO_USERNAME")
 password = config("ARANGO_PASSWORD")
 database = config("ARANGO_DB_NAME")
-
-data = clear_data(get_data(path))
 
 # Connect to "_system" database as root user.
 sys_db = client.db("_system", username=username, password=password)
@@ -59,18 +56,18 @@ for index, row in data.iterrows():
             "libelle_departement": row["Libelle du departement"],
             "inscrits": row["Inscrits"],
             "abstentions": row["Abstentions"],
-            "%Abs.Ins": row["%Abs.Ins"],
+            "%Abs Ins": row["%Abs Ins"],
             "votants": row["Votants"],
-            "%Vot.Ins": row["%Vot.Ins"],
+            "%Vot Ins": row["%Vot Ins"],
             "blancs": row["Blancs"],
-            "%Blancs.Ins": row["%Blancs.Ins"],
-            "%Blancs.Vot": row["%Blancs.Vot"],
+            "%Blancs Ins": row["%Blancs Ins"],
+            "%Blancs Vot": row["%Blancs Vot"],
             "nuls": row["Nuls"],
-            "%Nuls.Ins": row["%Nuls.Ins"],
-            "%Nuls.Vot": row["%Nuls.Vot"],
+            "%Nuls Ins": row["%Nuls Ins"],
+            "%Nuls Vot": row["%Nuls Vot"],
             "exprimes": row["Exprimes"],
-            "%Exp.Ins": row["%Exp.Ins"],
-            "%Exp.Vot": row["%Exp.Vot"],
+            "%Exp Ins": row["%Exp Ins"],
+            "%Exp Vot": row["%Exp Vot"],
         }
     )
     edges.insert(
