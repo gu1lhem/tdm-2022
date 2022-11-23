@@ -7,17 +7,12 @@ import asyncio  # asyncio.run() is used to run the main() function.
 import sys  # sys.exit() is used to exit the script with a specific exit code.
 import traceback  # traceback.print_exc() is used to print the stack trace of the exception.
 
-from decouple import (
-    config,
-)  # decouple is used to read the environment variables from the .env file.
+from decouple import \
+    config  # decouple is used to read the environment variables from the .env file.
 from gremlin_python.driver import (  # This is the endpoint of the Gremlin server.
-    client,
-    protocol,
-    serializer,
-)
-from gremlin_python.driver.protocol import (
-    GremlinServerError,
-)  # GremlinServerError is raised when the server returns an error.
+    client, protocol, serializer)
+from gremlin_python.driver.protocol import \
+    GremlinServerError  # GremlinServerError is raised when the server returns an error.
 
 from data_treatment import clear_data, get_data
 
