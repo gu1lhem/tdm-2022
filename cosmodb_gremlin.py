@@ -14,7 +14,7 @@ from gremlin_python.driver import (  # This is the endpoint of the Gremlin serve
 from gremlin_python.driver.protocol import \
     GremlinServerError  # GremlinServerError is raised when the server returns an error.
 
-from data_treatment import clear_data, get_data
+from data.data_treatment import clear_data, get_data
 
 path = config("PATH_TO_DATA")
 COSMODB_ENDPOINT = config("COSMODB_ENDPOINT")
@@ -63,14 +63,14 @@ def create_insert_vertices_query(data):
 
     # We will create a query to insert the candidats with the dict
     for candidat in candidats_dict:
-        query = "g.addV('candidat').property('id', '{0}').property('full_name', '{1}')".format(
+        query = "g.addV('candidat').property('pk', '{0}').property('full_name', '{1}')".format(
             candidat, candidats_dict[candidat]
         )
         queries.append(query)
 
     for index, row in data.iterrows():
         commune_key = f"D{row['Code du departement']}C{row['Code de la commune']}"
-        query = "g.addV('commune').property('id', '{0}').property('libelle_commune', '{1}').property('code_commune', '{2}').property('code_departement', '{3}').property('libelle_departement', '{4}').property('inscrits', {5}).property('abstentions', {6}).property('pourcentage_abstentions', {7}).property('votants', {8}).property('pourcentage_votants', {9}).property('blancs', {10}).property('pourcentage_blancs', {11}).property('pourcentage_blancs_sur_votants', {12}).property('nuls', {13}).property('pourcentage_nuls', {14}).property('pourcentage_nuls_sur_votants', {15}).property('exprimes', {16}).property('pourcentage_exprimes', {17}).property('pourcentage_exprimes_sur_votants', {18})".format(
+        query = "g.addV('commune').property('pk', '{0}').property('libelle_commune', '{1}').property('code_commune', '{2}').property('code_departement', '{3}').property('libelle_departement', '{4}').property('inscrits', {5}).property('abstentions', {6}).property('pourcentage_abstentions', {7}).property('votants', {8}).property('pourcentage_votants', {9}).property('blancs', {10}).property('pourcentage_blancs', {11}).property('pourcentage_blancs_sur_votants', {12}).property('nuls', {13}).property('pourcentage_nuls', {14}).property('pourcentage_nuls_sur_votants', {15}).property('exprimes', {16}).property('pourcentage_exprimes', {17}).property('pourcentage_exprimes_sur_votants', {18})".format(
             commune_key,
             row["Libelle de la commune"],
             row["Code de la commune"],
@@ -158,11 +158,11 @@ _gremlin_traversals = {
     "Get all persons sorted by first name": "g.V().hasLabel('person').order().by('firstName', incr).values('firstName')",
     "Get all persons that Thomas knows": "g.V('thomas').out('knows').hasLabel('person').values('firstName')",
     "People known by those who Thomas knows": "g.V('thomas').out('knows').hasLabel('person').out('knows').hasLabel('person').values('firstName')",
-    "Get the path from Thomas to Robin": "g.V('thomas').repeat(out()).until(has('id', 'robin')).path().by('firstName')",
+    "Get the path from Thomas to Robin": "g.V('thomas').repeat(out()).until(has('pk', 'robin')).path().by('firstName')",
 }
 
 _gremlin_drop_operations = {
-    "Drop Edge - Thomas no longer knows Mary": "g.V('thomas').outE('knows').where(inV().has('id', 'mary')).drop()",
+    "Drop Edge - Thomas no longer knows Mary": "g.V('thomas').outE('knows').where(inV().has('pk', 'mary')).drop()",
     "Drop Vertex - Drop Thomas": "g.V('thomas').drop()",
 }
 """
@@ -322,6 +322,15 @@ try:
     """
 
     # We will make the requests we decided to do:
+
+    # Get the candidate with the most votes in each commune
+    print("Get the candidate with the most votes in each commune")
+
+    query = "g.V().hasLabel('commune').as('commune').out('has').as('candidate').group().by('commune').by(out('has').order().by('votes', decr).limit(1).values('name')).select('commune', 'candidate')"
+    callback = client.submitAsync(query)
+    for result in callback.result():
+        print("\t{0}".format(str(result)))
+
 
 except GremlinServerError as e:
     print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
