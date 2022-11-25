@@ -61,6 +61,3 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     ]
 
     return data
-
-
-print(clear_data(get_data(path)))
