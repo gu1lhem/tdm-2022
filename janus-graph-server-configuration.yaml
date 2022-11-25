@@ -1,0 +1,6 @@
+# Configuration for the JanusGraph server. See https://stackoverflow.com/questions/53185602/gremlin-python-connecting-to-existing-janusgraph for more details.
+
+graphManager: org.janusgraph.graphdb.management.JanusGraphManager
+graphs: {
+  ConfigurationManagementGraph: conf/janusgraph-cql-configurationgraph.properties
+}

@@ -71,5 +71,5 @@ docker-compose up janusgraph
 ```
 Then access to the gremlin console with:
 ```bash
-docker-compose exec janusgraph bin/gremlin.sh
+docker-compose exec janusgraph bin/gremlin.sh ./janus-graph-server-configuration.yaml
 ```

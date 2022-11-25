@@ -22,10 +22,15 @@ from data.data_treatment import clear_data, get_data
 path = config("PATH_TO_DATA")
 JANUSGRAPH_HOST = config("JANUSGRAPH_HOST")
 JANUSGRAPH_PORT = config("JANUSGRAPH_PORT")
-JANUSGRAPH_USERNAME = config("JANUSGRAPH_USERNAME")
-JANUSGRAPH_PASSWORD = config("JANUSGRAPH_PASSWORD")
 JANUSGRAPH_DB_NAME = config("JANUSGRAPH_DB_NAME")
 
+
+""" this might be used to configure JanusGraph from the `docker-compose exec janusgraph bin/gremlin.sh janus-graph-server-configuration.yaml`
+CF. https://stackoverflow.com/questions/53185602/gremlin-python-connecting-to-existing-janusgraph
+def globals = [:]
+myGraph = ConfiguredGraphFactory.open("g")
+globals << [myGraphTraversal : myGraph.traversal()]
+"""
 
 graph = Graph()
 myGraphTraversal = graph.traversal().withRemote(
@@ -33,7 +38,35 @@ myGraphTraversal = graph.traversal().withRemote(
         f"ws://{JANUSGRAPH_HOST}:{JANUSGRAPH_PORT}/{JANUSGRAPH_DB_NAME}", "test"
     )
 )
-print(myGraphTraversal.V().count())
+
+# The traversal source [test] for alias [g] is not configured on the server.
+
+
+
+myGraphTraversal.V().count().next()
+
+# add 2 sample vertices
+myGraphTraversal.addV("person").property("name", "marko").property("age", 29).next()
+myGraphTraversal.addV("person").property("name", "peter").property("age", 35).next()
+
+# add 2 sample edges
+myGraphTraversal.V().has("name", "marko").addE("knows").to(myGraphTraversal.V().has("name", "peter")).next()
+
+# show graph
+def show_graph(client):
+    print("\n> {0}\n".format(_gremlin_show_graph))
+    callback = client.submitAsync(_gremlin_show_graph)
+    if callback.result() is not None:
+        print("\t{0}".format(callback.result().all().result()))
+    else:
+        print("Something went wrong with this query: {0}".format(_gremlin_show_graph))
+    print("\n")
+    print_status_attributes(callback.result())
+    print("\n")
+
+    print("\n")
+
+show_graph(myGraphTraversal)
 
 import sys
 
