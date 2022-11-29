@@ -95,10 +95,11 @@ try:
     print("Welcome to Azure Cosmos DB + Gremlin on Python!")
 
     # Drop the entire Graph
-    input(
-        "We're about to drop whatever graph is on the server. Press any key to continue..."
+    inp = input(
+        "We're about to drop whatever graph is on the server. Press y to continue, any other key to abort."
     )
-    cleanup_graph(client)
+    if inp == "y":
+        cleanup_graph(client)
 except GremlinServerError as e:
     print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
 
@@ -148,33 +149,52 @@ def create_insert_vertices_query(data):
 
     for index, row in data.iterrows():
         commune_key = f"D{row['Code du departement']}C{row['Code de la commune']}"
-        query = "g.addV('commune').property('pk', '{0}').property('libelle_commune', '{1}').property('code_commune', '{2}').property('code_departement', '{3}').property('libelle_departement', '{4}').property('inscrits', {5}).property('abstentions', {6}).property('pourcentage_abstentions', {7}).property('votants', {8}).property('pourcentage_votants', {9}).property('blancs', {10}).property('pourcentage_blancs', {11}).property('pourcentage_blancs_sur_votants', {12}).property('nuls', {13}).property('pourcentage_nuls', {14}).property('pourcentage_nuls_sur_votants', {15}).property('exprimes', {16}).property('pourcentage_exprimes', {17}).property('pourcentage_exprimes_sur_votants', {18})".format(
-            commune_key,
-            row["Libelle de la commune"],
-            row["Code de la commune"],
-            row["Code du departement"],
-            row["Libelle du departement"],
-            row["Inscrits"],
-            row["Abstentions"],
-            row["%Abs Ins"],
-            row["Votants"],
-            row["%Vot Ins"],
-            row["Blancs"],
-            row["%Blancs Ins"],
-            row["%Blancs Vot"],
-            row["Nuls"],
-            row["%Nuls Ins"],
-            row["%Nuls Vot"],
-            row["Exprimes"],
-            row["%Exp Ins"],
-            row["%Exp Vot"],
-        )
+        query = f"g.addV('commune').property('pk', '{commune_key}')"
+        query += f".property('libelle_commune', '{row['Libelle de la commune']}')"
+        query += f".property('code_commune', '{row['Code de la commune']}')"
+        query += f".property('code_departement', '{row['Code du departement']}')"
+        query += f".property('libelle_departement', '{row['Libelle du departement']}')"
+        query += f".property('inscrits', {row['Inscrits']})"
+        query += f".property('abstentions', {row['Abstentions']})"
+        query += f".property('pourcentage_abstentions', {row['%Abs Ins']})"
+        query += f".property('votants', {row['Votants']})"
+        query += f".property('pourcentage_votants', {row['%Vot Ins']})"
+        query += f".property('blancs', {row['Blancs']})"
+        query += f".property('pourcentage_blancs', {row['%Blancs Ins']})"
+        query += f".property('pourcentage_blancs_sur_votants', {row['%Blancs Vot']})"
+        query += f".property('nuls', {row['Nuls']})"
+        query += f".property('pourcentage_nuls', {row['%Nuls Ins']})"
+        query += f".property('pourcentage_nuls_sur_votants', {row['%Nuls Vot']})"
+        query += f".property('exprimes', {row['Exprimes']})"
+        query += f".property('pourcentage_exprimes', {row['%Exp Ins']})"
+        query += f".property('pourcentage_exprimes_sur_votants', {row['%Exp Vot']})"
+
         queries.append(query)
 
     return queries
 
+def insert_vertices(client, _gremlin_insert_vertices):
+    for query in _gremlin_insert_vertices:
+        print("\n> {0}\n".format(query))
+        callback = client.submitAsync(query)
+        if callback.result() is not None:
+            print(
+                "\tInserted this vertex:\n\t{0}".format(
+                    callback.result().all().result()
+                )
+            )
+        else:
+            print("Something went wrong with this query: {0}".format(query))
+        print("\n")
+        print_status_attributes(callback.result())
+        print("\n")
+
+    print("\n")
+
 try:
+    input("We're about to insert the vertices. Press any key to continue...")
     _gremlin_insert_vertices = create_insert_vertices_query(data)
+    insert_vertices(client, _gremlin_insert_vertices)
 except GremlinServerError as e:
     print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
 
@@ -220,8 +240,29 @@ def create_insert_edges_query(data):
             query = f"g.V('{commune_key}').addE('score').to(g.V('{candidat}')).property('score', {row[candidats_dict[candidat]]})"
             queries.append(query)
 
+
+def insert_edges(client, _gremlin_insert_edges):
+    for query in _gremlin_insert_edges:
+        print("\n> {0}\n".format(query))
+        callback = client.submitAsync(query)
+        if callback.result() is not None:
+            print(
+                "\tInserted this edge:\n\t{0}\n".format(
+                    callback.result().all().result()
+                )
+            )
+        else:
+            print("Something went wrong with this query:\n\t{0}".format(query))
+        print_status_attributes(callback.result())
+        print("\n")
+
+    print("\n")
+
 try:
+    input("We're about to insert the edges. Press any key to continue...")
     _gremlin_insert_edges = create_insert_edges_query(data)
+    insert_edges(client, _gremlin_insert_edges)
+
 except GremlinServerError as e:
     print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
 
@@ -250,23 +291,7 @@ except GremlinServerError as e:
     sys.exit(1)
 
 
-def insert_vertices(client):
-    for query in _gremlin_insert_vertices:
-        print("\n> {0}\n".format(query))
-        callback = client.submitAsync(query)
-        if callback.result() is not None:
-            print(
-                "\tInserted this vertex:\n\t{0}".format(
-                    callback.result().all().result()
-                )
-            )
-        else:
-            print("Something went wrong with this query: {0}".format(query))
-        print("\n")
-        print_status_attributes(callback.result())
-        print("\n")
 
-    print("\n")
 
 
 
@@ -367,40 +392,69 @@ def just_run(client, query):
     print("\n")
 
 
-# Now, we will execute different Gremlin queries:
+try:
+    input("We are about to get data from the graph. Press any key to continue...")
+    # Now, we will execute different Gremlin queries:
 
-# 1- the 10 Communes where there are the most Inscrits
+    # 1- the 10 Communes where there are the most Inscrits
 
-_gremlin_query_1 = "g.V().hasLabel('Commune').order().by('Inscrits', decr).limit(10).values('Nom', 'Inscrits')"
-just_run(client, _gremlin_query_1)
+    _gremlin_query_1 = "g.V().hasLabel('Commune').order().by('Inscrits', decr).limit(10).values('Nom', 'Inscrits')"
+    just_run(client, _gremlin_query_1)
 
-# 2- The score of Emmanuel Maccron in Paris
+    # 2- The score of Emmanuel Maccron in Paris
 
-_gremlin_query_2 = "g.V().hasLabel('Commune').has('Nom', 'Paris').outE('Score').inV().has('Nom', 'Emmanuel Macron').values('Score')"
-just_run(client, _gremlin_query_2)
+    _gremlin_query_2 = "g.V().hasLabel('Commune').has('Nom', 'Paris').outE('Score').inV().has('Nom', 'Emmanuel Macron').values('Score')"
+    just_run(client, _gremlin_query_2)
 
-# 3- For each Candidat, the city where he has the highest score
+    # 3- For each Candidat, the city where he has the highest score
 
-_gremlin_query_3 = "g.V().hasLabel('Candidat').as('candidat').outE('Score').inV().as('commune').order().by('Score', decr).dedup('candidat').select('candidat', 'commune').by('Nom').by('Nom')"
-just_run(client, _gremlin_query_3)
+    _gremlin_query_3 = "g.V().hasLabel('Candidat').as('candidat').outE('Score').inV().as('commune').order().by('Score', decr).dedup('candidat').select('candidat', 'commune').by('Nom').by('Nom')"
+    just_run(client, _gremlin_query_3)
 
-# 4- Results for the Commune where the Abstention is > 50%
+    # 4- Results for the Commune where the Abstention is > 50%
 
-_gremlin_query_4 = "g.V().hasLabel('Commune').has('Abstention', gt(50)).values('Nom', 'Abstention')"
-just_run(client, _gremlin_query_4)
+    _gremlin_query_4 = "g.V().hasLabel('Commune').has('Abstention', gt(50)).values('Nom', 'Abstention')"
+    just_run(client, _gremlin_query_4)
 
-# 5- The winner for each `Libelle du departement` (Département)
-# We will use the `fold` step to collect all the scores for each Candidat
+    # 5- The winner for each `Libelle du departement` (Département)
+    # We will use the `fold` step to collect all the scores for each Candidat
 
-_gremlin_query_5 = "g.V().hasLabel('Departement').as('departement').outE('Score').inV().as('candidat').order().by('Score', decr).dedup('departement').select('departement', 'candidat').by('Libelle').by('Nom')"
-just_run(client, _gremlin_query_5)
+    _gremlin_query_5 = "g.V().hasLabel('Departement').as('departement').outE('Score').inV().as('candidat').order().by('Score', decr).dedup('departement').select('departement', 'candidat').by('Libelle').by('Nom')"
+    just_run(client, _gremlin_query_5)
 
-# 6- For each Candidat, transfor the percentage by the number of Inscrit, and order by the number of Exprimés
+    # 6- For each Candidat, transfor the percentage by the number of Inscrit, and order by the number of Exprimés
 
-_gremlin_query_6 = "g.V().hasLabel('Candidat').as('candidat').outE('Score').inV().as('commune').select('candidat', 'commune').by('Nom').by('Inscrits', 'Exprimes', 'Abstention').by('Score').map{it.get().value.get('commune').value.get('Inscrits') * it.get().value.get('candidat').value.get('Score') / 100}.order().by(local, decr).dedup('candidat').select('candidat', 'commune').by('Nom').by('Nom')"
-just_run(client, _gremlin_query_6)
+    _gremlin_query_6 = "g.V().hasLabel('Candidat').as('candidat').outE('Score').inV().as('commune').select('candidat', 'commune').by('Nom').by('Inscrits', 'Exprimes', 'Abstention').by('Score').map{it.get().value.get('commune').value.get('Inscrits') * it.get().value.get('candidat').value.get('Score') / 100}.order().by(local, decr).dedup('candidat').select('candidat', 'commune').by('Nom').by('Nom')"
+    just_run(client, _gremlin_query_6)
 
+except GremlinServerError as e:
+    print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
 
+    # GremlinServerError.status_code returns the Gremlin protocol status code
+    # These are broad status codes which can cover various scenaios, so for more specific
+    # error handling we recommend using GremlinServerError.status_attributes['x-ms-status-code']
+    #
+    # Below shows how to capture the Cosmos DB specific status code and perform specific error handling.
+    # See detailed set status codes than can be returned here: https://docs.microsoft.com/en-us/azure/cosmos-db/gremlin-headers#status-codes
+    #
+    # See also list of available response status attributes that Gremlin API can return:
+    #     https://docs.microsoft.com/en-us/azure/cosmos-db/gremlin-headers#headers
+    cosmos_status_code = e.status_attributes["x-ms-status-code"]
+    if cosmos_status_code == 409:
+        print("Conflict error!")
+    elif cosmos_status_code == 412:
+        print("Precondition error!")
+    elif cosmos_status_code == 429:
+        print("Throttling error!")
+    elif cosmos_status_code == 1009:
+        print("Request timeout error!")
+    else:
+        print("Default error handling")
+
+    traceback.print_exc(file=sys.stdout)
+    sys.exit(1)
+
+    
 
 try:
 
