@@ -15,6 +15,8 @@ from gremlin_python.driver.driver_remote_connection import \
     DriverRemoteConnection
 from gremlin_python.driver.protocol import \
     GremlinServerError  # GremlinServerError is raised when the server returns an error.
+from gremlin_python.process.anonymous_traversal import traversal
+from gremlin_python.process.graph_traversal import __
 from gremlin_python.structure.graph import Graph
 
 from data.data_treatment import clear_data, get_data
@@ -32,25 +34,27 @@ myGraph = ConfiguredGraphFactory.open("g")
 globals << [myGraphTraversal : myGraph.traversal()]
 """
 
-graph = Graph()
-myGraphTraversal = graph.traversal().withRemote(
-    DriverRemoteConnection(
-        f"ws://{JANUSGRAPH_HOST}:{JANUSGRAPH_PORT}/{JANUSGRAPH_DB_NAME}", "test"
-    )
+connection = DriverRemoteConnection(
+    f"ws://{JANUSGRAPH_HOST}:{JANUSGRAPH_PORT}/{JANUSGRAPH_DB_NAME}", "g"
 )
+# The connection should be closed on shut down to close open connections with connection.close()
+g = traversal().withRemote(connection)
+# Reuse 'g' across the application
 
 # The traversal source [test] for alias [g] is not configured on the server.
 
 
-
-myGraphTraversal.V().count().next()
+g.V().count().next()
 
 # add 2 sample vertices
-myGraphTraversal.addV("person").property("name", "marko").property("age", 29).next()
-myGraphTraversal.addV("person").property("name", "peter").property("age", 35).next()
+g.addV("person").property("name", "marko").property("age", 29).next()
+g.addV("person").property("name", "peter").property("age", 35).next()
 
 # add 2 sample edges
-myGraphTraversal.V().has("name", "marko").addE("knows").to(myGraphTraversal.V().has("name", "peter")).next()
+g.V().has("name", "marko").addE("knows").to(__.V().has("name", "peter")).next()
+
+herculesAge = g.V().has("name", "hercules").values("age").next()
+print("Hercules is {} years old.".format(herculesAge))
 
 # show graph
 def show_graph(client):
@@ -66,7 +70,8 @@ def show_graph(client):
 
     print("\n")
 
-show_graph(myGraphTraversal)
+
+show_graph(g)
 
 import sys
 

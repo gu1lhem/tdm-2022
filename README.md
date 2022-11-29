@@ -73,3 +73,8 @@ Then access to the gremlin console with:
 ```bash
 docker-compose exec janusgraph bin/gremlin.sh ./janus-graph-server-configuration.yaml
 ```
+To connect the console to the database in the Gremlin console
+```bash
+:remote connect tinkerpop.server conf/remote.yaml
+:remote console
+```

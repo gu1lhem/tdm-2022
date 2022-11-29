@@ -7,7 +7,7 @@ setup(
     install_requires=["mypy", "pre-commit", "pandas", "python-decouple"],
     extras_require={
         "arangodb": ["python-arango"],
-        "janusgraph": [],
+        "janusgraph": ["gremlinpython"],
         "cosmodb": [],
     },
 )

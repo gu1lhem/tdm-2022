@@ -4,23 +4,29 @@
 
 
 import asyncio  # asyncio.run() is used to run the main() function.
-import sys  # sys.exit() is used to exit the script with a specific exit code.
+import sys
 import traceback  # traceback.print_exc() is used to print the stack trace of the exception.
+from time import \
+    sleep  # sys.exit() is used to exit the script with a specific exit code.
 
 from decouple import \
     config  # decouple is used to read the environment variables from the .env file.
 from gremlin_python.driver import (  # This is the endpoint of the Gremlin server.
     client, protocol, serializer)
+from gremlin_python.driver.driver_remote_connection import \
+    DriverRemoteConnection
 from gremlin_python.driver.protocol import \
     GremlinServerError  # GremlinServerError is raised when the server returns an error.
+from gremlin_python.process.anonymous_traversal import traversal
+from gremlin_python.process.graph_traversal import __
+from gremlin_python.structure.graph import Graph
 
-from data_treatment import clear_data, get_data
+from data.data_treatment import clear_data, get_data
 
 path = config("PATH_TO_DATA")
-JANUSGRAPH_ENDPOINT = config("JANUSGRAPH_ENDPOINT")
-JANUSGRAPH_DATABASE = config("JANUSGRAPH_DATABASE")
-JANUSGRAPH_GRAPH = config("JANUSGRAPH_GRAPH")
-JANUSGRAPH_PASSWORD = config("JANUSGRAPH_PASSWORD")
+JANUSGRAPH_HOST = config("JANUSGRAPH_HOST")
+JANUSGRAPH_PORT = config("JANUSGRAPH_PORT")
+JANUSGRAPH_DB_NAME = config("JANUSGRAPH_DB_NAME")
 
 data = clear_data(get_data(path))
 
@@ -69,13 +75,14 @@ def create_insert_vertices_query(data):
         queries.append(query)
 
     for index, row in data.iterrows():
+
         commune_key = f"D{row['Code du departement']}C{row['Code de la commune']}"
-        query = "g.addV('commune').property('id', '{0}').property('libelle_commune', '{1}').property('code_commune', '{2}').property('code_departement', '{3}').property('libelle_departement', '{4}').property('inscrits', {5}).property('abstentions', {6}).property('pourcentage_abstentions', {7}).property('votants', {8}).property('pourcentage_votants', {9}).property('blancs', {10}).property('pourcentage_blancs', {11}).property('pourcentage_blancs_sur_votants', {12}).property('nuls', {13}).property('pourcentage_nuls', {14}).property('pourcentage_nuls_sur_votants', {15}).property('exprimes', {16}).property('pourcentage_exprimes', {17}).property('pourcentage_exprimes_sur_votants', {18})".format(
+        query = "g.addV('commune').property('id', '{0}').property('libelle_commune', '{1}').property('code_commune', '{2}').property('code_departement', '{3}').property('libelle_departement', '{4}').property('inscrits', {5}).property('abstentions', {6}).property('pourcentage_abstentions', {7}f).property('votants', {8}).property('pourcentage_votants', {9}f).property('blancs', {10}).property('pourcentage_blancs', {11}f).property('pourcentage_blancs_sur_votants', {12}f).property('nuls', {13}).property('pourcentage_nuls', {14}f).property('pourcentage_nuls_sur_votants', {15}f).property('exprimes', {16}).property('pourcentage_exprimes', {17}f).property('pourcentage_exprimes_sur_votants', {18}f)".format(
             commune_key,
-            row["Libelle de la commune"],
+            row["Libelle de la commune"].replace("'", r"\'"),
             row["Code de la commune"],
             row["Code du departement"],
-            row["Libelle du departement"],
+            row["Libelle du departement"].replace("'", r"\'"),
             row["Inscrits"],
             row["Abstentions"],
             row["%Abs Ins"],
@@ -113,8 +120,10 @@ def create_insert_edges_query(data):
 
         # We will create a query to insert the edges with the dict
         for candidat in candidats_dict:
-            query = f"g.V('{commune_key}').addE('score').to(g.V('{candidat}')).property('score', {row[candidats_dict[candidat]]})"
+            query = f"g.V().has('id','{commune_key}').addE('Score').to(__.V().has('id','{candidat}')).property('score', {row[candidats_dict[candidat]]}f).next()"
             queries.append(query)
+
+    return queries
 
 
 _gremlin_insert_edges = create_insert_edges_query(data)
@@ -123,7 +132,7 @@ _gremlin_insert_edges = create_insert_edges_query(data)
 def insert_vertices(client):
     for query in _gremlin_insert_vertices:
         print("\n> {0}\n".format(query))
-        callback = client.submitAsync(query)
+        callback = client.submit_async(query)
         if callback.result() is not None:
             print(
                 "\tInserted this vertex:\n\t{0}".format(
@@ -185,7 +194,7 @@ def print_status_attributes(result):
 
 def cleanup_graph(client):
     print("\n> {0}".format(_gremlin_cleanup_graph))
-    callback = client.submitAsync(_gremlin_cleanup_graph)
+    callback = client.submit_async(_gremlin_cleanup_graph)
     if callback.result() is not None:
         callback.result().all().result()
     print("\n")
@@ -198,11 +207,7 @@ def insert_edges(client):
         print("\n> {0}\n".format(query))
         callback = client.submitAsync(query)
         if callback.result() is not None:
-            print(
-                "\tInserted this edge:\n\t{0}\n".format(
-                    callback.result().all().result()
-                )
-            )
+            print("\tInserted this edge:")
         else:
             print("Something went wrong with this query:\n\t{0}".format(query))
         print_status_attributes(callback.result())
@@ -259,6 +264,7 @@ def execute_traversals(client):
 
 
 def execute_drop_operations(client):
+
     for key in _gremlin_drop_operations:
         print("{0}:".format(key))
         print("\n> {0}".format(_gremlin_drop_operations[key]))
@@ -270,15 +276,12 @@ def execute_drop_operations(client):
 
 
 try:
+    # The connection should be closed on shut down to close open connections with connection.close()
     client = client.Client(
-        f"wss://{COSMODB_ENDPOINT}.gremlin.cosmos.azure.com:443/",
-        "g",
-        username=f"/dbs/{COSMODB_DATABASE}/colls/{COSMODB_GRAPH}",
-        password=f"{COSMODB_PASSWORD}",
-        message_serializer=serializer.GraphSONSerializersV2d0(),
+        f"ws://{JANUSGRAPH_HOST}:{JANUSGRAPH_PORT}/{JANUSGRAPH_DB_NAME}", "g"
     )
 
-    print("Welcome to Azure Cosmos DB + Gremlin on Python!")
+    print("Welcome to Janusgraph + Gremlin on Python!")
 
     # Drop the entire Graph
     input(
@@ -323,8 +326,8 @@ try:
 
     # We will make the requests we decided to do:
 
-except GremlinServerError as e:
-    print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
+    # GremlinServerError as e:
+    #  print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
 
     # GremlinServerError.status_code returns the Gremlin protocol status code
     # These are broad status codes which can cover various scenaios, so for more specific
@@ -335,6 +338,9 @@ except GremlinServerError as e:
     #
     # See also list of available response status attributes that Gremlin API can return:
     #     https://docs.microsoft.com/en-us/azure/cosmos-db/gremlin-headers#headers
+except GremlinServerError as e:
+    print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
+
     cosmos_status_code = e.status_attributes["x-ms-status-code"]
     if cosmos_status_code == 409:
         print("Conflict error!")
