@@ -16,6 +16,12 @@ from gremlin_python.driver.protocol import \
 
 from data.data_treatment import clear_data, get_data
 
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    # This is required on Windows to avoid the following error:
+    # RuntimeError: There is no current event loop in thread 'Thread-1'.
+
+
 path = config("PATH_TO_DATA")
 COSMODB_ENDPOINT = config("COSMODB_ENDPOINT")
 COSMODB_DATABASE = config("COSMODB_DATABASE")
@@ -139,10 +145,6 @@ def insert_vertices(client):
     print("\n")
 
 
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    # This is required on Windows to avoid the following error:
-    # RuntimeError: There is no current event loop in thread 'Thread-1'.
 
 
 _gremlin_cleanup_graph = "g.V().drop()"
@@ -166,6 +168,7 @@ _gremlin_drop_operations = {
     "Drop Vertex - Drop Thomas": "g.V('thomas').drop()",
 }
 """
+
 
 
 def print_status_attributes(result):
@@ -267,6 +270,53 @@ def execute_drop_operations(client):
             print(result)
         print_status_attributes(callback.result())
         print("\n")
+
+def just_run(client, query):
+    print("\n> {0}".format(query))
+    callback = client.submitAsync(query)
+    if callback.result() is not None:
+        print("\t{0}".format(callback.result().all().result()))
+    else:
+        print("Something went wrong with this query: {0}".format(query))
+
+    print("\n")
+    print_status_attributes(callback.result())
+    print("\n")
+
+
+# Now, we will execute different Gremlin queries:
+
+# 1- the 10 Communes where there are the most Inscrits
+
+_gremlin_query_1 = "g.V().hasLabel('Commune').order().by('Inscrits', decr).limit(10).values('Nom', 'Inscrits')"
+just_run(client, _gremlin_query_1)
+
+# 2- The score of Emmanuel Maccron in Paris
+
+_gremlin_query_2 = "g.V().hasLabel('Commune').has('Nom', 'Paris').outE('Score').inV().has('Nom', 'Emmanuel Macron').values('Score')"
+just_run(client, _gremlin_query_2)
+
+# 3- For each Candidat, the city where he has the highest score
+
+_gremlin_query_3 = "g.V().hasLabel('Candidat').as('candidat').outE('Score').inV().as('commune').order().by('Score', decr).dedup('candidat').select('candidat', 'commune').by('Nom').by('Nom')"
+just_run(client, _gremlin_query_3)
+
+# 4- Results for the Commune where the Abstention is > 50%
+
+_gremlin_query_4 = "g.V().hasLabel('Commune').has('Abstention', gt(50)).values('Nom', 'Abstention')"
+just_run(client, _gremlin_query_4)
+
+# 5- The winner for each `Libelle du departement` (Département)
+# We will use the `fold` step to collect all the scores for each Candidat
+
+_gremlin_query_5 = "g.V().hasLabel('Departement').as('departement').outE('Score').inV().as('candidat').order().by('Score', decr).dedup('departement').select('departement', 'candidat').by('Libelle').by('Nom')"
+just_run(client, _gremlin_query_5)
+
+# 6- For each Candidat, transfor the percentage by the number of Inscrit, and order by the number of Exprimés
+
+_gremlin_query_6 = "g.V().hasLabel('Candidat').as('candidat').outE('Score').inV().as('commune').select('candidat', 'commune').by('Nom').by('Inscrits', 'Exprimes', 'Abstention').by('Score').map{it.get().value.get('commune').value.get('Inscrits') * it.get().value.get('candidat').value.get('Score') / 100}.order().by(local, decr).dedup('candidat').select('candidat', 'commune').by('Nom').by('Nom')"
+just_run(client, _gremlin_query_6)
+
 
 
 try:
