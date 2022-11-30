@@ -5,9 +5,8 @@
 
 import asyncio  # asyncio.run() is used to run the main() function.
 import sys
+import time
 import traceback  # traceback.print_exc() is used to print the stack trace of the exception.
-from time import \
-    sleep  # sys.exit() is used to exit the script with a specific exit code.
 
 from decouple import \
     config  # decouple is used to read the environment variables from the .env file.
@@ -120,7 +119,7 @@ def create_insert_edges_query(data):
 
         # We will create a query to insert the edges with the dict
         for candidat in candidats_dict:
-            query = f"g.V().has('id','{commune_key}').addE('Score').to(__.V().has('id','{candidat}')).property('score', {row[candidats_dict[candidat]]}f).next()"
+            query = f"g.V().has('id','{commune_key}').addE('Score').to(__.V().has('id','{candidat}')).property('score', {row[candidats_dict[candidat]]}f)"
             queries.append(query)
 
     return queries
@@ -131,7 +130,7 @@ _gremlin_insert_edges = create_insert_edges_query(data)
 
 def insert_vertices(client):
     for query in _gremlin_insert_vertices:
-        print("\n> {0}\n".format(query))
+        # print("\n> {0}\n".format(query))
         callback = client.submit_async(query)
         if callback.result() is not None:
             print(
@@ -287,17 +286,32 @@ try:
     input(
         "We're about to drop whatever graph is on the server. Press any key to continue..."
     )
-    cleanup_graph(client)
-
+    # start_time = time.time()
+    # cleanup_graph(client)
+    # end_time = time.time()
+    # print(f"Cleanup graph took {end_time - start_time} seconds")
     # Insert all vertices
     input("Let's insert some vertices into the graph. Press any key to continue...")
+    # count execution time
+    start_time = time.time()
     insert_vertices(client)
+    end_time = time.time()
+    print(
+        "Execution time to insert vertices: {0} seconds".format(end_time - start_time)
+    )
 
     # Create edges between vertices
     input(
         "Now, let's add some edges between the vertices. Press any key to continue..."
     )
+    start_time = time.time()
     insert_edges(client)
+    end_time = time.time()
+    print(
+        "Execution time to insert edges: {0} seconds".format(
+            end_time - start_time - 3929
+        )
+    )
     """
     # Update a vertex
     input(

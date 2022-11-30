@@ -11,6 +11,6 @@ services:
       - ARANGO_ROOT_PASSWORD=${ARANGO_PASSWORD}
 
   janusgraph:
-    image: janusgraph/janusgraph:latest
+    image: janusgraph/janusgraph:0.5
     ports:
       - "8182:8182"
