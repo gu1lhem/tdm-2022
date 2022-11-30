@@ -6,7 +6,7 @@
 import asyncio  # asyncio.run() is used to run the main() function.
 import sys  # sys.exit() is used to exit the script with a specific exit code.
 import traceback  # traceback.print_exc() is used to print the stack trace of the exception.
-import time
+from time import time
 
 from decouple import \
     config  # decouple is used to read the environment variables from the .env file.
@@ -58,6 +58,7 @@ candidats_dict = {
 
 _gremlin_cleanup_graph = "g.V().drop()"
 
+
 def cleanup_graph(client):
     print("\n> {0}".format(_gremlin_cleanup_graph))
     callback = client.submitAsync(_gremlin_cleanup_graph)
@@ -81,7 +82,6 @@ def print_status_attributes(result):
     #
     # This can be
     print("\tResponse status_attributes:\n\t{0}".format(result.status_attributes))
-
 
 
 try:
@@ -129,7 +129,6 @@ except GremlinServerError as e:
     sys.exit(1)
 
 
-
 def create_insert_vertices_query(data):
     """
     Create the query to insert the vertices in the graph from the `data` DataFrame.
@@ -150,8 +149,12 @@ def create_insert_vertices_query(data):
 
     for index, row in data.iterrows():
         commune_key = f"D{row['Code du departement']}C{row['Code de la commune']}"
-        libelle_commune = row['Libelle de la commune'].replace("'", r"\'").replace('"', '')
-        libelle_departement = row["Libelle du departement"].replace("'", r"\'").replace('"', ''),
+        libelle_commune = (
+            row["Libelle de la commune"].replace("'", r"\'").replace('"', "")
+        )
+        libelle_departement = (
+            row["Libelle du departement"].replace("'", r"\'").replace('"', ""),
+        )
         libelle_departement = libelle_departement[0]
         query = f"g.addV('commune').property('pk', '{commune_key}')"
         query += f".property('libelle_commune', '{libelle_commune}')"
@@ -177,6 +180,7 @@ def create_insert_vertices_query(data):
 
     return queries
 
+
 def insert_vertices(client, _gremlin_insert_vertices):
     for query in _gremlin_insert_vertices:
         print("\n> {0}\n".format(query))
@@ -195,6 +199,7 @@ def insert_vertices(client, _gremlin_insert_vertices):
 
     print("\n")
 
+
 # count execution time
 start_time = time.time()
 
@@ -203,8 +208,9 @@ try:
     if inp == "y":
         _gremlin_insert_vertices = create_insert_vertices_query(data)
         insert_vertices(client, _gremlin_insert_vertices)
-        
+
         end_time = time.time()
+
         print("Execution time: {0} seconds".format(end_time - start_time))
 
 except GremlinServerError as e:
@@ -254,6 +260,7 @@ def create_insert_edges_query(data):
 
     return queries
 
+
 def insert_edges(client, _gremlin_insert_edges):
     for query in _gremlin_insert_edges:
         print("\n> {0}\n".format(query))
@@ -270,6 +277,7 @@ def insert_edges(client, _gremlin_insert_edges):
         print("\n")
 
     print("\n")
+
 
 # count execution time
 start_time = time.time()
@@ -311,13 +319,6 @@ except GremlinServerError as e:
     sys.exit(1)
 
 
-
-
-
-
-
-
-
 """
 _gremlin_update_vertices = ["g.V('thomas').property('age', 45)"]
 
@@ -337,9 +338,6 @@ _gremlin_drop_operations = {
     "Drop Vertex - Drop Thomas": "g.V('thomas').drop()",
 }
 """
-
-
-
 
 
 def update_vertices(client):
@@ -398,6 +396,7 @@ def execute_drop_operations(client):
             print(result)
         print_status_attributes(callback.result())
         print("\n")
+
 
 def just_run(client, query):
     print("\n> {0}".format(query))
@@ -474,7 +473,6 @@ except GremlinServerError as e:
     traceback.print_exc(file=sys.stdout)
     sys.exit(1)
 
-    
 
 try:
 
@@ -502,7 +500,7 @@ try:
     # Count all vertices again
     input("How many vertices do we have left? Press any key to continue...")
     count_vertices(client)
-    
+
 
     # We will make the requests we decided to do:
 
