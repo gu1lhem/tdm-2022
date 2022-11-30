@@ -6,6 +6,7 @@
 import asyncio  # asyncio.run() is used to run the main() function.
 import sys  # sys.exit() is used to exit the script with a specific exit code.
 import traceback  # traceback.print_exc() is used to print the stack trace of the exception.
+import time
 
 from decouple import \
     config  # decouple is used to read the environment variables from the .env file.
@@ -149,25 +150,28 @@ def create_insert_vertices_query(data):
 
     for index, row in data.iterrows():
         commune_key = f"D{row['Code du departement']}C{row['Code de la commune']}"
+        libelle_commune = row['Libelle de la commune'].replace("'", r"\'").replace('"', '')
+        libelle_departement = row["Libelle du departement"].replace("'", r"\'").replace('"', ''),
+        libelle_departement = libelle_departement[0]
         query = f"g.addV('commune').property('pk', '{commune_key}')"
-        query += f".property('libelle_commune', '{row['Libelle de la commune']}')"
+        query += f".property('libelle_commune', '{libelle_commune}')"
         query += f".property('code_commune', '{row['Code de la commune']}')"
         query += f".property('code_departement', '{row['Code du departement']}')"
-        query += f".property('libelle_departement', '{row['Libelle du departement']}')"
+        query += f".property('libelle_departement', '{libelle_departement}')"
         query += f".property('inscrits', {row['Inscrits']})"
         query += f".property('abstentions', {row['Abstentions']})"
-        query += f".property('pourcentage_abstentions', {row['%Abs Ins']})"
+        query += f".property('pourcentage_abstentions', {row['%Abs Ins']}f)"
         query += f".property('votants', {row['Votants']})"
-        query += f".property('pourcentage_votants', {row['%Vot Ins']})"
+        query += f".property('pourcentage_votants', {row['%Vot Ins']}f)"
         query += f".property('blancs', {row['Blancs']})"
-        query += f".property('pourcentage_blancs', {row['%Blancs Ins']})"
-        query += f".property('pourcentage_blancs_sur_votants', {row['%Blancs Vot']})"
+        query += f".property('pourcentage_blancs', {row['%Blancs Ins']}f)"
+        query += f".property('pourcentage_blancs_sur_votants', {row['%Blancs Vot']}f)"
         query += f".property('nuls', {row['Nuls']})"
-        query += f".property('pourcentage_nuls', {row['%Nuls Ins']})"
-        query += f".property('pourcentage_nuls_sur_votants', {row['%Nuls Vot']})"
+        query += f".property('pourcentage_nuls', {row['%Nuls Ins']}f)"
+        query += f".property('pourcentage_nuls_sur_votants', {row['%Nuls Vot']}f)"
         query += f".property('exprimes', {row['Exprimes']})"
-        query += f".property('pourcentage_exprimes', {row['%Exp Ins']})"
-        query += f".property('pourcentage_exprimes_sur_votants', {row['%Exp Vot']})"
+        query += f".property('pourcentage_exprimes', {row['%Exp Ins']}f)"
+        query += f".property('pourcentage_exprimes_sur_votants', {row['%Exp Vot']}f)"
 
         queries.append(query)
 
@@ -191,10 +195,18 @@ def insert_vertices(client, _gremlin_insert_vertices):
 
     print("\n")
 
+# count execution time
+start_time = time.time()
+
 try:
-    input("We're about to insert the vertices. Press any key to continue...")
-    _gremlin_insert_vertices = create_insert_vertices_query(data)
-    insert_vertices(client, _gremlin_insert_vertices)
+    inp = input("We're about to insert the vertices. Press y to continue...")
+    if inp == "y":
+        _gremlin_insert_vertices = create_insert_vertices_query(data)
+        insert_vertices(client, _gremlin_insert_vertices)
+        
+        end_time = time.time()
+        print("Execution time: {0} seconds".format(end_time - start_time))
+
 except GremlinServerError as e:
     print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
 
@@ -237,9 +249,10 @@ def create_insert_edges_query(data):
 
         # We will create a query to insert the edges with the dict
         for candidat in candidats_dict:
-            query = f"g.V('{commune_key}').addE('score').to(g.V('{candidat}')).property('score', {row[candidats_dict[candidat]]})"
+            query = f"g.V('{commune_key}').addE('score').to(g.V('{candidat}')).property('score', {row[candidats_dict[candidat]]}f).next()"
             queries.append(query)
 
+    return queries
 
 def insert_edges(client, _gremlin_insert_edges):
     for query in _gremlin_insert_edges:
@@ -258,10 +271,17 @@ def insert_edges(client, _gremlin_insert_edges):
 
     print("\n")
 
+# count execution time
+start_time = time.time()
+
 try:
-    input("We're about to insert the edges. Press any key to continue...")
-    _gremlin_insert_edges = create_insert_edges_query(data)
-    insert_edges(client, _gremlin_insert_edges)
+    inp = input("We're about to insert the edges. Press y to continue...")
+    if inp == "y":
+        _gremlin_insert_edges = create_insert_edges_query(data)
+        insert_edges(client, _gremlin_insert_edges)
+
+        end_time = time.time()
+        print("Execution time: {0} seconds".format(end_time - start_time))
 
 except GremlinServerError as e:
     print("Code: {0}, Attributes: {1}".format(e.status_code, e.status_attributes))
