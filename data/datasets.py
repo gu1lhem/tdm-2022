@@ -3,22 +3,72 @@
 Module that will create many datasets from the original one. The idea is to obtain different sized datasets
 """
 
-import pandas as pd
+from pathlib import Path
+
 from decouple import config
 
 from data.data_treatment import clear_data, get_data
 
 path = config("PATH_TO_DATA")
-data = clear_data(get_data(path))  # 35719 rows x 29 columns
+path = Path(path)
+pd_posts_full = clear_data(get_data(path / "posts.csv"))
+pd_posts_full = pd_posts_full.drop(columns=["body"])
+# Get the ids where there is a null value
+null_ids = pd_posts_full[pd_posts_full.isnull().any(axis=1)].index
+pd_users_full = clear_data(get_data(path / "users.csv"))
+pd_tags_full = clear_data(get_data(path / "tags.csv"))
+pd_posts_rel_full = clear_data(get_data(path / "posts_rel.csv"))
+# Remove the posts that have a null value
+pd_posts_rel_full = pd_posts_rel_full[
+    ~pd_posts_rel_full[":START_ID(Post)"].isin(null_ids)
+]
+pd_tags_posts_rel_full = clear_data(get_data(path / "tags_posts_rel.csv"))
+# Remove the posts that have a null value
+pd_tags_posts_rel_full = pd_tags_posts_rel_full[
+    ~pd_tags_posts_rel_full[":START_ID(Post)"].isin(null_ids)
+]
+pd_users_posts_rel_full = clear_data(get_data(path / "users_posts_rel.csv"))
+# Remove the posts that have a null value
+pd_users_posts_rel_full = pd_users_posts_rel_full[
+    ~pd_users_posts_rel_full[":END_ID(Post)"].isin(null_ids)
+]
 
-# Create a dataset with only the communes of the 1st department
-data_1 = data[data["Code du departement"] == "1"]  # 408 rows x 29 columns
+# Keep only the lines where the id is < 100
+pd_posts_100 = pd_posts_full[pd_posts_full["postId:ID(Post)"] < 100]
+pd_posts_rel_100 = pd_posts_rel_full[pd_posts_rel_full[":START_ID(Post)"] < 100]
+pd_tags_posts_rel_100 = pd_tags_posts_rel_full[
+    pd_tags_posts_rel_full[":START_ID(Post)"] < 100
+]
+pd_users_posts_rel_100 = pd_users_posts_rel_full[
+    pd_users_posts_rel_full[":END_ID(Post)"] < 100
+]
 
-# Create a dataset with only the communes of the 1st to 20th department
-data_20 = data[data["Code du departement"] <= "20"]  # 4693 rows x 29 columns
+# Keep only the lines where the id is < 1000
+pd_posts_1000 = pd_posts_full[pd_posts_full["postId:ID(Post)"] < 1000]
+pd_posts_rel_1000 = pd_posts_rel_full[pd_posts_rel_full[":START_ID(Post)"] < 1000]
+pd_tags_posts_rel_1000 = pd_tags_posts_rel_full[
+    pd_tags_posts_rel_full[":START_ID(Post)"] < 1000
+]
+pd_users_posts_rel_1000 = pd_users_posts_rel_full[
+    pd_users_posts_rel_full[":END_ID(Post)"] < 1000
+]
 
-# Create a dataset with only the communes of the 1st to 50th department
-data_50 = data[data["Code du departement"] <= "45"]  # 15509 rows x 29 columns
+# Keep only the lines where the id is < 5000
+pd_posts_5000 = pd_posts_full[pd_posts_full["postId:ID(Post)"] < 5000]
+pd_posts_rel_5000 = pd_posts_rel_full[pd_posts_rel_full[":START_ID(Post)"] < 5000]
+pd_tags_posts_rel_5000 = pd_tags_posts_rel_full[
+    pd_tags_posts_rel_full[":START_ID(Post)"] < 5000
+]
+pd_users_posts_rel_5000 = pd_users_posts_rel_full[
+    pd_users_posts_rel_full[":END_ID(Post)"] < 5000
+]
 
-# Create a dataset with only the communes of the 1st to 100th department
-data_80 = data[data["Code du departement"] <= "75"]  # 28843 rows x 29 columns
+# Keep only the lines where the id is < 10000
+pd_posts_10000 = pd_posts_full[pd_posts_full["postId:ID(Post)"] < 10000]
+pd_posts_rel_10000 = pd_posts_rel_full[pd_posts_rel_full[":START_ID(Post)"] < 10000]
+pd_tags_posts_rel_10000 = pd_tags_posts_rel_full[
+    pd_tags_posts_rel_full[":START_ID(Post)"] < 10000
+]
+pd_users_posts_rel_10000 = pd_users_posts_rel_full[
+    pd_users_posts_rel_full[":END_ID(Post)"] < 10000
+]

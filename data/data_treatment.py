@@ -12,33 +12,30 @@ Code.du.departement	Libelle.du.departement	Code.de.la.commune	Libelle.de.la.comm
 This is a CSV file, with the first line being the headers.
 """
 
+import pathlib
+
 import pandas as pd
-from decouple import config
-
-path = config("PATH_TO_DATA")
 
 
-def get_data(path: str, separator: str = ";") -> pd.DataFrame:
+def get_data(path: pathlib.Path, separator: str = ",") -> pd.DataFrame:
     """
     Function that will return the data from the CSV file.
 
-    Args:
-        path (str): Path to the CSV file.
-        separator (str): Separator used in the CSV file.
+    Parameters
+    ----------
+    path : pathlib.Path
+        Path to the CSV file.
+    separator : str, optional
+        Separator of the CSV file. The default is ",".
 
-    Returns:
-        pd.DataFrame: Dataframe containing the data.
+    Returns
+    -------
+    data : pd.DataFrame
+        Data from the CSV file.
 
-    Requires:
-        pandas
     """
-    if path.endswith(".csv"):
-        try:
-            return pd.read_csv(path, sep=separator)
-        except UnicodeDecodeError:
-            return pd.read_csv(path, sep=separator, encoding="latin-1")
-    else:
-        raise ValueError("The path given is not a CSV file.")
+    data = pd.read_csv(path, sep=separator)
+    return data
 
 
 def clear_data(data: pd.DataFrame) -> pd.DataFrame:
@@ -54,10 +51,6 @@ def clear_data(data: pd.DataFrame) -> pd.DataFrame:
     Requires:
         pandas
     """
-
-    # We replace the _ and . by a space
-    data.columns = [
-        header.replace("_", " ").replace(".", " ") for header in data.columns
-    ]
+    ...
 
     return data
