@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 for arangoDB :
 
@@ -110,22 +111,22 @@ if not graph.has_edge_definition("users_posts_rel"):
 
 # For CosmosDB with Gremlin API
 
-from data.datasets import (pd_posts_full, pd_posts_rel_full, pd_tags_full,
-                           pd_tags_posts_rel_full, pd_users_full,
-                           pd_users_posts_rel_full)
-from gremlin_python.driver import client, serializer, protocol
-from gremlin_python.driver.protocol import \
-    GremlinServerError  # GremlinServerError is raised when the server returns an error.
-from gremlin_python.process.anonymous_traversal import traversal
-from gremlin_python.process.graph_traversal import __
-from gremlin_python.process.traversal import T, Order, P, Cardinality, Scope
-
-from decouple import config
-
 import asyncio
 import sys
 import time
 import traceback
+
+from decouple import config
+from gremlin_python.driver import client, protocol, serializer
+from gremlin_python.driver.protocol import \
+    GremlinServerError  # GremlinServerError is raised when the server returns an error.
+from gremlin_python.process.anonymous_traversal import traversal
+from gremlin_python.process.graph_traversal import __
+from gremlin_python.process.traversal import Cardinality, Order, P, Scope, T
+
+from data.datasets import (pd_posts_full, pd_posts_rel_full, pd_tags_full,
+                           pd_tags_posts_rel_full, pd_users_full,
+                           pd_users_posts_rel_full)
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -140,6 +141,7 @@ COSMODB_PASSWORD = config("COSMODB_PASSWORD")
 
 
 # Graph graph_so has already been created in the Azure portal.
+
 
 def print_status_attributes(result):
     # This logs the status attributes returned for successful requests.
@@ -200,6 +202,7 @@ except GremlinServerError as e:
     traceback.print_exc(file=sys.stdout)
     sys.exit(1)
 
+
 def cleanup_value(value):
     # This function cleans up the query string to remove any new lines and extra spaces.
     # This is required to avoid Gremlin syntax errors.
@@ -218,15 +221,14 @@ def cleanup_value(value):
         return 0
     else:
         print(f"[{value}]")
-    return value.replace(
-                "nan", "0"
-            ).replace(
-                "'", r"\'"
-            ) if type(value) == str else value
+    return (
+        value.replace("nan", "0").replace("'", r"\'") if type(value) == str else value
+    )
+
 
 def create_insert_vertices_query():
     # Create a Gremlin query to insert vertices into the graph.
-    
+
     queries = []
 
     for index, row in pd_posts_full.iterrows():
@@ -268,9 +270,8 @@ def create_insert_vertices_query():
             f"g.addV('user').property('pk', '{cleanup_value(row['userId:ID(User)'])}').property('name', '{cleanup_value(row['displayname'])}').property('reputation', {cleanup_value(row['reputation'])}).property('views', {cleanup_value(row['views'])}).property('upvotes', {cleanup_value(row['upvotes'])}).property('downvotes', {cleanup_value(row['downvotes'])})"
         )
 
-
-
     return queries
+
 
 def insert_vertices(client, _gremlin_insert_vertices):
     for query in _gremlin_insert_vertices:
@@ -301,7 +302,7 @@ start_time = time.time()
 try:
     inp = input("We're about to insert the vertices. Press y to continue...")
     if inp == "y":
-        
+
         insert_vertices(client, _gremlin_insert_vertices)
 
         end_time = time.time()
