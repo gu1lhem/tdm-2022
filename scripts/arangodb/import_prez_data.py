@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from connection import client
-from datasets import data, data_1, data_20, data_50, data_100
 from decouple import config
+
+from data.datasets import data, data_1, data_20, data_50, data_80
 
 path = config("PATH_TO_DATA")
 username = config("ARANGO_USERNAME")
@@ -18,8 +19,11 @@ if not sys_db.has_database(database):
 # Connect to "tdm-2022" database as root user.
 db = client.db(database, username=username, password=password)
 
+datasets = [data, data_1, data_20, data_50, data_80]
+datasets_description = ["all", "1", "20", "50", "80"]
+
 # Create a new graph named "prez-2017".
-graph = db.create_graph("prez-2017")
+graph = db.create_graph(f"prez-2017-{datasets_description[0]}")
 
 # Create vertex collections for the graph.
 candidats = graph.create_vertex_collection("candidats")
@@ -31,7 +35,6 @@ edges = graph.create_edge_definition(
     from_vertex_collections=["communes"],
     to_vertex_collections=["candidats"],
 )
-
 
 candidats.insert({"_key": "EM", "full_name": "Emmanuel Macron"})
 candidats.insert({"_key": "MLP", "full_name": "Marine Le Pen"})
@@ -45,7 +48,8 @@ candidats.insert({"_key": "FA", "full_name": "Francois Asselineau"})
 candidats.insert({"_key": "JC", "full_name": "Jacques Cheminade"})
 candidats.insert({"_key": "JL", "full_name": "Jean Lassalle"})
 
-for index, row in data.iterrows():
+
+for index, row in datasets[0].iterrows():
     commune_key = f"D{row['Code du departement']}C{row['Code de la commune']}"
     communes.insert(
         {
